@@ -1,5 +1,4 @@
 import React, { useState} from 'react';
-import { Link } from 'react-router-dom';
 
 const CreatePost = () => {
     const [postData, setPostData] = useState({eventname: '', categories: '', description: '', date: '',  startTime: '', endTime: ' ', location:''});
@@ -28,9 +27,7 @@ const CreatePost = () => {
                 <input value={postData.location} onChange={(e) => setPostData({ ...postData, location: e.target.value })} type="location" placeholder="USC Lyon Center" id="location" name="location" />
                 {/* onChange={(e) => setPostData({ ...postData, title: e.target.value })}  */}
             </form>
-            <Link to='/dashboard'>
-                <button type="submit" className="button">Create Post</button>
-            </Link>
+            <button type="submit" className="button">Create Post</button>
         </div>
     )
 }
