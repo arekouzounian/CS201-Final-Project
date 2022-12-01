@@ -7,10 +7,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.security.Timestamp;
+//import java.security.Timestamp;
+import java.sql.Timestamp;
 
 /*
- * Usage of class: call the approriate public method for needed query.
+ * Usage of class: call the appropriate public method for needed query.
  * Each query creates a new connection to database and disconnects when done with the query
  * So that user of the class does not need keep track of calling connect/disconnect themselves
  */
@@ -315,14 +316,55 @@ public class Database{
      * Add to the RSVP table whenever a user RSVP to an event
      */
     public void addRSVP(int eventId, int userId){
-
+    	PreparedStatement ps = null;
+    	try {
+            connect();
+            String sqlString = "INSERT INTO rsvp(userId, eventId, reminded) VALUES (?, ?, TRUE)";
+			ps = conn.prepareStatement(sqlString);
+			ps.setInt(1, userId);
+            ps.setInt(2, eventId);
+            ps.executeUpdate();
+		} catch (SQLException sqle) {
+			System.out.println ("Exception when adding RSVP: " + sqle.getMessage());
+		} finally {
+			try {
+				if (ps != null) {
+					ps.close();
+				}	
+                disconnect();	
+			} catch (SQLException sqle) {
+				System.out.println("Exception when finalizing adding RSVP: " + sqle.getMessage());
+			}
+        }
     }
 
     /*
      * Delete an RSVP entry whenever a user un-RSVP from an event
      */
     public void deleteRSVP(int eventId, int userId){
+    	PreparedStatement ps = null;
+		try {
+            connect();
+            String sqlString = "DELETE FROM rsvp rs" 
+                             + " WHERE rs.userId = ?"
+                             + " AND rs.eventId = ?";
+			ps = conn.prepareStatement(sqlString);
+			ps.setInt(1, userId);
+            ps.setInt(2, eventId);
+            ps.execute();
 
+		}catch (SQLException sqle) {
+			System.out.println ("Exception when removing RSVP: " + sqle.getMessage());
+		} finally {
+			try {
+				if (ps != null) {
+					ps.close();
+				}	
+                disconnect();	
+			} catch (SQLException sqle) {
+				System.out.println("Exception when closing prepared statement: " + sqle.getMessage());
+			}
+        }
     }
 
     /*
@@ -333,14 +375,96 @@ public class Database{
      * @param activityType: the event can only be tagged with one activity type
      */
     public void addEvent(String name, String description, String activityType, Timestamp eventDateTime, String eventLocation, int createdUserId){
+    	PreparedStatement ps = null;
+    	Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+    	int eventId = -1;
+    	ResultSet rs;
+		try {
+			rs = ps.getGeneratedKeys();
+			if(rs.next()){
+	            eventId = rs.getInt("eventId");
+	            rs.close();
+			}
+		} catch (SQLException e) {
+			System.out.println("Exception when generating event ID");
+		}
+    	try {
+            connect();
+            String sqlString = "INSERT INTO events(eventId, eventTitle, eventDescription, "
+            				   + "userId, eventDateTime, eventLocation, "
+            				   + "postedEventTime, preferenceId, expired) VALUES (?, ?, ?, ?, ?, ?, ?, "
+            				   + "(SELECT types.preferenceId FROM preferencetypes types WHERE types.preferenceName = ?), FALSE)";
+			ps = conn.prepareStatement(sqlString);
+			ps.setInt(1, eventId);
+            ps.setString(2, name);
+            ps.setString(3,  description);
+            ps.setInt(4, createdUserId);
+            ps.setTimestamp(5, eventDateTime);
+            ps.setString(6,  eventLocation);
+            ps.setObject(7, currentTime);
+            ps.setString(8, activityType);
+            ps.execute();
+		} catch (SQLException sqle) {
+			System.out.println ("Exception when adding event: " + sqle.getMessage());
+		} finally {
+			try {
+				if (ps != null) {
+					ps.close();
+				}	
+                disconnect();	
+			} catch (SQLException sqle) {
+				System.out.println("Exception when finalizing adding event: " + sqle.getMessage());
+			}
+        }
+    	addRSVP(eventId, createdUserId);
+    	addPreferenceToUser(createdUserId, activityType);
+    }
+    
+    public void deleteEvent(int eventId){
+    	PreparedStatement ps = null;
+		try {
+            connect();
+            String sqlString = "DELETE FROM events e WHERE e.eventId = ?";
+			ps = conn.prepareStatement(sqlString);
+			ps.setInt(1, eventId);
+            ps.execute();
 
+		} catch (SQLException sqle) {
+			System.out.println ("Exception when removing event: " + sqle.getMessage());
+		} finally {
+			try {
+				if (ps != null) {
+					ps.close();
+				}	
+                disconnect();	
+			} catch (SQLException sqle) {
+				System.out.println("Exception when closing prepared statement: " + sqle.getMessage());
+			}
+        }
     }
 
     /* 
      * Modify an existing event's description, event date/time, activity type, etc.
      */
-    public void modifyEvent(){
-
+    public void modifyEvent(Event e){
+    	// new event is passed in, delete old event with its id, insert e into eventstable 
+    	PreparedStatement ps = null;
+    	ResultSet rs = null;
+    	int userId = -1;
+    	deleteEvent(e.getEventId());
+    	try {
+    		connect();
+    		String sqlString = "SELECT userId FROM users WHERE displayName = ?";
+    		ps = conn.prepareStatement(sqlString);
+    		ps.setString(1, e.getCreatedUserName());
+    		rs = ps.executeQuery();
+    		userId = rs.getInt(1);
+    	} catch (SQLException sqle) {
+			System.out.println ("Exception when getting notifications: " + sqle.getMessage());
+		} finally {
+			disconnect();
+        }
+    	addEvent(e.getName(), e.getDescription(), e.getActivityType(), e.getPostedDateTime(), e.getEventLocation(), userId);
     }
 
     /*
@@ -348,7 +472,35 @@ public class Database{
      * Used for the user's personal feed
      */
     public ArrayList<Event> getMatchingEvents(int userId){
-        return null;
+    	ArrayList<Event> events = new ArrayList<Event>();
+    	PreparedStatement ps = null;
+    	PreparedStatement ps1 = null;
+    	try {
+            connect();
+            String sqlString = "SELECT pref.preferenceId FROM preferences pref WHERE pref.userId = ? " + " limit 1";
+            ps = conn.prepareStatement(sqlString);
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            int prefId = rs.getInt(1);
+            
+            ps1 = conn.prepareStatement("SELECT * FROM events e WHERE e.userId = ? AND e.preferenceId = ?");
+            ps1.setInt(1, userId);
+            ps1.setInt(2, prefId);
+            ResultSet rs1 = ps1.executeQuery();
+            
+            //iterate through result and append to list if event matches preference Id
+            while(rs1.next()){
+            	events.add(new Event(rs1.getString("eventTitle"), rs1.getString("eventDescription"), rs1.getString("activityType"), 
+            				rs1.getTimestamp("postedDateTime"), rs1.getTimestamp("eventDateTime"), rs1.getString("eventLocation"), false, 
+            				rs1.getString("createdUserName"), rs1.getInt("eventId")));
+            }
+            rs1.close();           
+    	} catch (SQLException sqle) {
+			System.out.println ("Exception when getting preferred events: " + sqle.getMessage());
+		} finally {
+			disconnect();
+        }
+        return events;
     }
 
     /*
@@ -356,6 +508,27 @@ public class Database{
      * To be sent to the front end for alert notifications display.
      */
     public ArrayList<Notification> getNotifications(int userId){
-        return null;
+    	ArrayList<Notification> notifications = new ArrayList<Notification>();
+    	Timestamp currentTime = new Timestamp(System.currentTimeMillis());	
+    	try {
+            connect();
+            Statement st = conn.createStatement();
+            ResultSet rs1 = st.executeQuery("SELECT * FROM events");
+            //ResultSet rs2 = st.executeQuery("SELECT eventTitle FROM events");
+            //ResultSet rs3 = st.executeQuery("SELECT eventId FROM events");
+            
+            //iterate through result and append to list if event starts in an hour or less from current time
+            while(rs1.next()){
+            	if(rs1.getTimestamp("eventDateTime").getTime() - currentTime.getTime() <= 3600000) {
+                    notifications.add(new Notification(rs1.getString("eventTitle"), rs1.getTimestamp("eventDateTime"), rs1.getInt("eventId")));
+            	}
+            }
+            rs1.close();
+		} catch (SQLException sqle) {
+			System.out.println ("Exception when getting notifications: " + sqle.getMessage());
+		} finally {
+			disconnect();
+        }
+    	return notifications;
     }
 }
