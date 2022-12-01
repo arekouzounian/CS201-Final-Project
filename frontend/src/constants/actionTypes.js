@@ -1,6 +1,5 @@
 export const LOGIN = 'LOGIN';
-// export const CREATE = 'CREATE';
-// export const DELETE = 'DELETE';
-// export const FETCH_ALL = 'FETCH_ALL';
-// export const FETCH_BY_SEARCH = 'FETCH_BY_SEARCH';
-// export const RSVP = 'RSVP';
+export const CREATE = 'CREATE';
+export const REGISTER = 'REGISTER';
+export const FETCH_ALL = 'FETCH_ALL';
+export const FETCH_CURATED = 'FETCH_CURATED';

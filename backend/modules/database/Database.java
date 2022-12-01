@@ -253,8 +253,8 @@ public class Database{
             //get user's basic info
             String sqlString = "SELECT user.email, user.displayName, types.preferenceName, pref.alert"
                             +" FROM users user" 
-                            +" INNER JOIN preferences pref ON user.userId = pref.userId" 
-                            +" INNER JOIN preferencetypes types ON pref.preferenceId = types.preferenceId" 
+                            +" LEFT JOIN preferences pref ON user.userId = pref.userId" 
+                            +" LEFT JOIN preferencetypes types ON pref.preferenceId = types.preferenceId" 
                             +" WHERE userId = ?";
 			ps = conn.prepareStatement(sqlString);
 			ps.setInt(1, userId);

@@ -7,28 +7,27 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+/*
+ * Model to return user's preferences and their corresponding notifications
+ * For front end to display on user's page
+ */
 public class Preference {
+	public String preferenceName;
+	//default notification setting for any newly added preference is false
+	//user can change this setting in user's page
+	public boolean alert = false;
+
 	
-	private int pid;
-	private String pname;
-	private boolean alert;
+	public Preference(String s) {
+		this.preferenceName = s;
+	}
 	
-	public int getPid() {
-		return pid;
+	public Preference() {
 	}
-	public void setPid(int pid) {
-		this.pid = pid;
-	}
-	public String getPname() {
-		return pname;
-	}
-	public void setPname(String pname) {
-		this.pname = pname;
-	}
-	public boolean isAlert() {
-		return alert;
-	}
-	public void setAlert(boolean alert) {
-		this.alert = alert;
-	}
+//	
+//	public Preference(String s, boolean a) {
+//		this.alert = a;
+//		this.preferenceName = s;
+//	}
+
 }

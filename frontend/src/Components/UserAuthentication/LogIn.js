@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux";
 
 import { actionLogIn } from '../../actions/actions';
 
-const initialState = {email: '', password: '', authenticated: null};
+const initialState = {email: '', password: '', authenticated: -1, preferences: []};
 
 const LogIn = (props) => {
    
@@ -21,7 +21,7 @@ const LogIn = (props) => {
             localStorage.removeItem('profile')
             setErrorMessage('Invalid Credentials')
         }
-        else if(JSON.parse(localStorage.getItem('profile'))?.authenticated === 1) {
+        else if(JSON.parse(localStorage.getItem('profile'))?.authenticated > 1) {
             navigate('/dashboard')
         }
         
@@ -40,9 +40,6 @@ const LogIn = (props) => {
         else {
             localStorage.setItem('profile', JSON.stringify({...form, authenticated: JSON.parse(localStorage.getItem('profile'))?.authenticated}))
             dispatch(actionLogIn(form, navigate));
-            if(localStorage.getItem('profile').authenticated === -1) {
-              
-            }
         }
     };
     const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
