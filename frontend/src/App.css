@@ -5,14 +5,30 @@
     align-items: center;
     justify-content: center;
     color: white;
-    background-image: linear-gradient(79deg, #7439db, #C66FBC 48%, #F7944D);
+    /* background-image: linear-gradient(79deg, #7439db, #C66FBC 48%, #F7944D); */
+    /* background-size: cover; */
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    margin: '-10px';
+    height: 100%;
   }
-  
+  html, body {
+    margin: 0;
+    padding: 0;    
+    background-image: linear-gradient(79deg, #7439db, #C66FBC 48%, #F7944D);
+    background-attachment: fixed;
+    overflow:   scroll;
+  }  
+
+  ::-webkit-scrollbar {
+    width: 0px;
+    background: transparent; /* make scrollbar transparent */
+}
+
   .userAuthentication-container, .login-form, .register-form, .createpost-form{
     display: flex;
     flex-direction: column;
   }
+
   
   @media screen and (min-width: 600px) {
     .auth-form-container {
@@ -42,6 +58,15 @@
     border-radius: 10px;
     cursor: pointer;
     color: #7439db;
+  }
+
+  .register {
+    color: black;
+    border: none;
+    background-color: white;
+    border-radius: 10px;
+    margin: 0.5rem 0;
+    width: 300px;
   }
 
   .link-btn {

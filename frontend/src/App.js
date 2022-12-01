@@ -1,12 +1,14 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Container } from "@mui/system";
 import './App.css';
 
 import LogIn from "./Components/UserAuthentication/LogIn";
 import Register from "./Components/UserAuthentication/Register";
 import CreatePost from "./Components/CreatePost/CreatePost";
 import Dashboard from "./Components/Dashboard/Dashboard";
-import PostPage from "./Components/PostPage/PostPage";
+import Post from "./Components/Posts/Post/Post";
+import CuratedDashboard from "./Components/Dashboard/CuratedDashboard";
 
 
 const App = () => {
@@ -23,20 +25,16 @@ const App = () => {
         // </div>  
         <div className="App">
             <BrowserRouter>
+                <Container maxWidth="xl">
                 <Routes>
-                    {
-                        /*
-                        Maybe have the '/' directory first check if you're logged in
-                        If you are authenticated, then go to dashboard
-                        If you aren't, go to login
-                        */
-                    }
                     <Route path="/" exact element={<LogIn/ >} />
                     <Route path="/register" exact element={<Register/ >} />
                     <Route path="/createpost" exact element={<CreatePost/ >} />
                     <Route path="/dashboard" exact element={<Dashboard/ >} />
-                    {/* <Route path="/post" exact element={<PostPage/ >} /> */}
+                    <Route path="/post" exact element={<Post/ >} />
+                    <Route path="/curateddashboard" exact element={<CuratedDashboard/ >} />
                 </Routes>
+                </Container>
             </BrowserRouter>
         </div>
     )
